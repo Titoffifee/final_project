@@ -1,6 +1,11 @@
 from sql import *
 
 
+def didnt_find_asset(update, context):
+    update.message.reply_text('ПРИКРЕПИ ФАЙЛ\nДля продолжения работы вернитесь в меню')
+    return END
+
+
 def insert_user(my_id):
     session = create_session()
     if len(session.query(User).filter(User.id_tg == my_id).all()) == 0:
@@ -59,3 +64,7 @@ def choose_work_asset(update, context):
     update.message.reply_text('Выберите необходимое действие:',
                               reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
     return 4
+
+
+def get_time(update, context):
+    return my_time
