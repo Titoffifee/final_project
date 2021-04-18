@@ -1,7 +1,8 @@
-from services import *
+from functions import *
 
 
 def start_and_help(update, context):
+    insert_user(update.message.from_user.id)
     reply_keyboard = [['/menu']]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     with open('start_text.txt', 'r', encoding='utf8') as f:
@@ -10,6 +11,7 @@ def start_and_help(update, context):
 
 
 def menu(update, context):
+    insert_user(update.message.from_user.id)
     keyboard = [[asset, briefcase]]
     markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
     update.message.reply_text('Выберите что хотите сделать:', reply_markup=markup)
@@ -23,17 +25,29 @@ def disp(update, context):
     elif update.message.text == briefcase:
         return 666
     else:
-        update.message.reply_text('Такой ответ не предполагается. Возвращение в меню')
-        return END
+        return ERROR(update, context)
 
 
 def input_asset(update, context):
-    update.message.reply_text('юху')
-    on_base = []
-    if not on_base:
-        return 404
-    context.user_data['ticket'] = update.message.text
-    return 3
+    if not check_asset(update.message.text):
+        keyboard = get_best(update.message.text) + [['список доступных активов']]
+        update.message.reply_text('Прямого совпадения не найдено. '
+                                  'Выберите нужную акцию пользуясь клавиатурой, '
+                                  'вернитесь в меню или ознакомьтесь со списком доступынх активов',
+                                  reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+        return 3
+    context.user_data['name'] = update.message.text
+    return choose_work_asset(update, context)
+
+
+def choose_asset(update, context):
+    if update.message.text == 'список доступных активов':
+        update.message.reply_text('ПРИКРЕПИ ФАЙЛ\nДля продолжения работы вернитесь в меню')
+        return END
+    if not check_asset(update.message.text):
+        return ERROR(update, context)
+    context.user_data['name'] = update.message.text
+    return choose_work_asset(update, context)
 
 
 if __name__ == '__main__':
@@ -47,10 +61,12 @@ if __name__ == '__main__':
         states={
             1: [MessageHandler(Filters.text, disp)],
             2: [MessageHandler(Filters.text, input_asset)],
+            3: [MessageHandler(Filters.text, choose_asset)],
             404: ['Вывод списка доступных']
         },
         fallbacks=[menu_command]
     )
     dp.add_handler(conv_handler)
+    global_init('db/db.sqlite3')
     updater.start_polling()
     updater.idle()
