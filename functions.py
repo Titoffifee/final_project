@@ -36,6 +36,18 @@ def get_asset(key, n):
             return None
 
 
+
+def get_user(key, n):
+    session = create_session()
+    try:
+        if key == 'id':
+            return session.query(User).filter(User.id == n).first()
+        else:
+            return session.query(User).filter(User.id_tg == n).first()
+    except Exception:
+        return None
+
+
 def get_best(s):
     session = create_session()
     names = [el.name for el in session.query(Asset).all()]
@@ -50,7 +62,7 @@ def get_best(s):
             break
         if i not in ans:
             ans.append(i)
-    return list(map(lambda x: [x], ans[:11]))
+    return list(map(lambda x: [x], ans[:21]))
 
 
 def ERROR(update, context):
@@ -68,3 +80,33 @@ def choose_work_asset(update, context):
 
 def get_time(update, context):
     return my_time
+
+
+def erase_asset(id_user=-1, id_asset=-1):
+    session = create_session()
+    try:
+        for el in session.query(UsersAsset).all():
+            if el.user == id_user:
+                if id_asset == -1 or el.asset == id_asset:
+                    session.delete(el)
+        session.commit()
+        return True
+    except Exception:
+        return False
+
+
+def insert_asset(update, context):
+    try:
+        new_asset = UsersAsset()
+        new_asset.user = get_user('id_tg', update.message.from_user.id).id
+        new_asset.asset = get_asset('name', context.user_data['name']).id
+        new_asset.kol = context.user_data['kol']
+        new_asset.cost = context.user_data['cost']
+        new_asset.timer = context.user_data['timer']
+        session = create_session()
+        session.add(new_asset)
+        session.commit()
+        update.message.reply_text('Актив успешно добавлен')
+    except Exception as e:
+        print(e)
+        update.message.reply_text('Произошла ошибка во время добавления')

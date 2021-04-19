@@ -23,14 +23,13 @@ class User(SqlAlchemyBase):
     id_tg = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
-list_assets = sqlalchemy.Table(
-    'list_assets',
-    SqlAlchemyBase.metadata,
-    sqlalchemy.Column('user', sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column('asset', sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column('timer', sqlalchemy.Integer, nullable=False),
-    sqlalchemy.Column('kol', sqlalchemy.Integer, nullable=False)
-)
+class UsersAsset(SqlAlchemyBase):
+    __tablename__ = 'list_assets'
+    user = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'), primary_key=True, nullable=False)
+    asset = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('assets.id'), primary_key=True, nullable=False)
+    timer = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    kol = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    cost = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
 
 def global_init(db_file):
