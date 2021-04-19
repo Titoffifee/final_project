@@ -36,7 +36,6 @@ def get_asset(key, n):
             return None
 
 
-
 def get_user(key, n):
     session = create_session()
     try:
@@ -83,6 +82,7 @@ def get_time(update, context):
 
 
 def erase_asset(id_user=-1, id_asset=-1):
+    print(id_user, id_asset)
     session = create_session()
     try:
         for el in session.query(UsersAsset).all():
@@ -110,3 +110,48 @@ def insert_asset(update, context):
     except Exception as e:
         print(e)
         update.message.reply_text('Произошла ошибка во время добавления')
+
+
+def get_cost(update, context):
+    ticker = get_asset('name', context.user_data['name']).ticker
+    params = {
+        'access_key': KEY,
+        'symbols': ticker,
+    }
+    ans = requests.get(URL_intraday, params=params)
+    try:
+        last_change = ans.json()['data'][0]
+        date = last_change['date'].split('T')[0].split('-')
+        time = last_change['date'].split('T')[1].split(':')
+        time[-1] = time[-1][:2]
+        date = dt.datetime(year=int(date[0]), month=int(date[1]), day=int(date[2]),
+                           hour=int(time[0]), minute=int(time[1]), second=int(time[2]))
+        if '+' in last_change['date']:
+            date = date + (get_time(update, context) -
+                           dt.timedelta(hours=int(last_change['date'].split('+')[1][:2]),
+                                        minutes=int(last_change['date'].split('+')[1][2:])))
+        else:
+            date = date + (get_time(update, context) +
+                           dt.timedelta(hours=int(last_change['date'].split('-')[1][:2]),
+                                        minutes=int(last_change['date'].split('-')[1][2:])))
+        message = 'открытие: ' + str(last_change['open']) + \
+                  '\nзакрытие: ' + str(last_change['close']) + \
+                  '\nЦеновой максимум: ' + str(last_change['high']) + \
+                  '\nЦеновой минимум: ' + str(last_change['low']) + \
+                  '\nДата получения данных: ' + date.strftime('%d.%m.%Y %H:%M:%S')
+        update.message.reply_text(message)
+    except Exception:
+        update.message.reply_text('Произошла ошибка во время получения данных.')
+        return 1
+
+
+def cycle_briefcase_solo_work(update, context, bot=None):
+    keyboard = ReplyKeyboardMarkup([['Изменить данные актива', 'Удалить актив из портфеля'],
+                                    ['Узнать стоимость актива', 'Подробная аналитика']])
+    if bot is None:
+        update.message.reply_text('Выберите, что хотите сделать', reply_markup=keyboard)
+    else:
+        bot.send_message(text='Выберите, что хотите сделать',
+                         reply_markup=keyboard,
+                         chat_id=context.user_data['id_user'])
+    return 11

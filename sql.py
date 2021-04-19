@@ -29,7 +29,7 @@ class UsersAsset(SqlAlchemyBase):
     asset = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('assets.id'), primary_key=True, nullable=False)
     timer = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     kol = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    cost = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    cost = sqlalchemy.Column(sqlalchemy.Float, nullable=False)
 
 
 def global_init(db_file):
