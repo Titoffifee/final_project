@@ -1,7 +1,7 @@
 from functions import *
 
 
-def start_and_help(update, context):
+def start(update, context):
     insert_user(update.message.from_user.id)
     context.user_data['id_user'] = update.message.from_user.id
     reply_keyboard = [['/menu']]
@@ -9,6 +9,13 @@ def start_and_help(update, context):
     with open('start_text.txt', 'r', encoding='utf8') as f:
         text = f.read()
         update.message.reply_text(text, reply_markup=markup)
+
+
+def help(update, context):
+    keyboard = ReplyKeyboardMarkup([['/start', '/menu']], one_time_keyboard=True)
+    update.message.reply_text('Для получения инструкции по работе с ботом вызовите команду /start\n'
+                              'Если вы обнаружили какой-то баг или неопределённое поведение, сообщите мне.\n'
+                              '@nacedesisedc', reply_markup=keyboard)
 
 
 def menu(update, context):
@@ -53,7 +60,8 @@ def input_asset(update, context):
 
 def choose_asset(update, context):
     if update.message.text == 'список доступных активов':
-       return didnt_find_asset(update, context)
+        didnt_find_asset(update, context)
+        return menu(update, context)
     if not check_asset(update.message.text):
         return ERROR(update, context)
     context.user_data['name'] = update.message.text
@@ -269,7 +277,8 @@ if __name__ == '__main__':
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
     menu_command = CommandHandler('menu', menu)
-    dp.add_handler(CommandHandler('start', start_and_help))
+    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CommandHandler('help', help))
     conv_handler = ConversationHandler(
         entry_points=[menu_command],
         states={
@@ -295,7 +304,7 @@ if __name__ == '__main__':
             14: [MessageHandler(Filters.text & ~Filters.command, change_timer)],
             15: [MessageHandler(Filters.text & ~Filters.command, change_cost)]
         },
-        fallbacks=[CommandHandler('help', start_and_help), menu_command]
+        fallbacks=[CommandHandler('help', help), menu_command]
     )
     dp.add_handler(conv_handler)
     global_init('db/db.sqlite3')

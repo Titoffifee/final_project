@@ -2,8 +2,7 @@ from sql import *
 
 
 def didnt_find_asset(update, context):
-    update.message.reply_text('ПРИКРЕПИ ФАЙЛ\nДля продолжения работы вернитесь в меню')
-    return END
+    update.message.reply_text('ПРИКРЕПИ ФАЙЛ')
 
 
 def insert_user(my_id):
@@ -67,7 +66,8 @@ def get_best(s):
 def ERROR(update, context):
     update.message.reply_text('Ответ такого формата не предполагается. '
                               'Для продолжения работы воспользуйтесь командой /menu')
-    return END
+    from main import menu
+    return menu(update, context)
 
 
 def choose_work_asset(update, context):
@@ -104,11 +104,13 @@ def insert_asset(update, context):
         new_asset.cost = context.user_data['cost']
         new_asset.timer = context.user_data['timer']
         session = create_session()
+        if len(session.query(UsersAsset).filter(UsersAsset.user == new_asset.user, UsersAsset.asset == new_asset.asset).all()) != 0:
+            update.message.reply_text('Данный актив уже есть в вашем портфеле')
+            return None
         session.add(new_asset)
         session.commit()
         update.message.reply_text('Актив успешно добавлен')
     except Exception as e:
-        print(e)
         update.message.reply_text('Произошла ошибка во время добавления')
 
 
