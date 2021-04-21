@@ -141,7 +141,8 @@ def get_cost(ticker):
                   '\nЦеновой максимум: ' + str(last_change['high']) + \
                   '\nЦеновой минимум: ' + str(last_change['low']) + \
                   '\nДата получения данных: ' + date.strftime('%d.%m.%Y %H:%M:%S')
-        return message
+        cost = (last_change['high'] + last_change['low']) / 2
+        return (message, cost)
     except Exception as e:
         return (1, 'Произошла ошибка во время получения данных.')
 

@@ -8,10 +8,13 @@ def timer(context):
     id_assets = session.query(UsersAsset).filter(UsersAsset.user == my_id, UsersAsset.timer == tr).all()
     for el in id_assets:
         asset_out = session.query(Asset).filter(Asset.id == el.asset).first()
+        cost = get_cost(asset_out.ticker)
         text = 'Название: ' + asset_out.name + '\n'
-        text = text + get_cost(asset_out.ticker)
+        text = text + cost[0]
         text = text + '\n---'
         text = text + '\nЦена при покупке: ' + str(el.cost)
+        rost = str((cost[1] - el.cost) / el.cost * 100) + '% (' + str(el.cost) + ' -> ' + str(cost[1]) + ')'
+        text = text + '\nРост с момента покупки: ' + rost
         context.bot.send_message(chat_id=user_id, text=text)
 
 
@@ -117,11 +120,11 @@ def choose_asset(update, context):
 def work_with_asset(update, context):
     if update.message.text == 'узнать стоимость актива':
         v = get_cost(get_ticker(context.user_data['name']))
-        if type(v) == tuple:
+        if type(v[0]) == int:
             update.message.reply_text(v[1])
             return menu(update, context)
         else:
-            update.message.reply_text(v)
+            update.message.reply_text(v[0])
             return choose_work_asset(update, context)
     elif update.message.text == 'получить подробную аналитику':
         if analys(update, context):
@@ -228,8 +231,8 @@ def get_asset_to_work(update, context):
 def briefcase_solo_work(update, context):
     if update.message.text == 'Узнать стоимость актива':
         v = get_cost(get_ticker(context.user_data['name']))
-        if type(v) != tuple:
-            update.message.reply_text(v)
+        if type(v[0]) == str:
+            update.message.reply_text(v[0])
             return cycle_briefcase_solo_work(update, context)
         else:
             update.message.reply_text(v[1])
