@@ -133,7 +133,8 @@ def work_with_asset(update, context):
 def choose_work_briefcase(update, context):
     if update.message.text == 'Поработать со всем портфелем':
         update.message.reply_text('Выберите, что хотите сделать:',
-                                  reply_markup=ReplyKeyboardMarkup([['Очистить портфель']],
+                                  reply_markup=ReplyKeyboardMarkup([['Очистить портфель'],
+                                                                    ['Задать таймер всему портфелю']],
                                                                    one_time_keyboard=True))
         return 6
     elif update.message.text == 'Добавить актив в портфель':
@@ -167,6 +168,11 @@ def choose_work_all(update, context):
         else:
             update.message.reply_text('Произошла ошибка')
         return menu(update, context)
+    elif update.message.text == 'Задать таймер всему портфелю':
+        keyboard = ReplyKeyboardMarkup([['3 часа', '6 часов'], ['12 часов', 'без оповещений']],
+                                       one_time_keyboard=True)
+        update.message.reply_text('Выберите таймер', reply_markup=keyboard)
+        return 16
 
 
 def insert1(update, context):
@@ -322,6 +328,24 @@ def change_cost(update, context):
     return cycle_briefcase_solo_work(update, context)
 
 
+def timer_all(update, context):
+    new_timer = None
+    if update.message.text == '3 часа':
+        new_timer = 3
+    elif update.message.text == '6 часов':
+        new_timer = 6
+    elif update.message.text == '12 часов':
+        new_timer = 12
+    session = create_session()
+    asset_db = session.query(UsersAsset).filter(UsersAsset.user == get_user('tg_id',
+                                                                            context.user_data['id_user']).id).all()
+    for el in asset_db:
+        el.timer = new_timer
+    session.commit()
+    update.message.reply_text('Таймеры изменены')
+    return menu(update, context)
+
+
 if __name__ == '__main__':
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -338,7 +362,7 @@ if __name__ == '__main__':
                                              'получить подробную аналитику']), work_with_asset)],
             5: [MessageHandler(Filters.text(['Добавить актив в портфель', 'Поработать с конкретным активом',
                                              'Поработать со всем портфелем']), choose_work_briefcase)],
-            6: [MessageHandler(Filters.text(['Очистить портфель']), choose_work_all)],
+            6: [MessageHandler(Filters.text(['Очистить портфель', 'Задать таймер всему портфелю']), choose_work_all)],
             7: [MessageHandler(Filters.text & ~Filters.command, insert1)],
             8: [MessageHandler(Filters.text(['3 часа', '6 часов', '12 часов', 'без оповещений']), insert2)],
             9: [MessageHandler(Filters.text & ~Filters.command, insert3)],
@@ -350,8 +374,11 @@ if __name__ == '__main__':
             12: [MessageHandler(Filters.text(['Количество', 'Частота оповещений', 'Стоимость при покупке'])
                                 & ~Filters.command, change_asset)],
             13: [MessageHandler(Filters.text & ~Filters.command, change_kol)],
-            14: [MessageHandler(Filters.text & ~Filters.command, change_timer)],
-            15: [MessageHandler(Filters.text & ~Filters.command, change_cost)]
+            14: [MessageHandler(Filters.text(['3 часа', '6 часов', '12 часов', 'без оповещений'])
+                                & ~Filters.command, change_timer)],
+            15: [MessageHandler(Filters.text & ~Filters.command, change_cost)],
+            16: [MessageHandler(Filters.text(['3 часа', '6 часов', '12 часов', 'без оповещений'])
+                                & ~Filters.command, timer_all)]
         },
         fallbacks=[CommandHandler('help', help), menu_command]
     )
