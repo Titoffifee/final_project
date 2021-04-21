@@ -9,11 +9,12 @@ import datetime as dt
 # update.message.from_user.id
 # updater.bot.send_message()
 # но нужен ID чата = ID пользователя
-TOKEN = '1738037077:AAFKcVrhOvPsoT0sU8kZRVvo4rZpoA0gPqo'
+TOKEN = '1793569905:AAHgC5pxbuqgnH-RICGbbJyC3zsAFcecmm0'
 KEY = '8051be96033a3935c4a9cfcb270fccc8'
 asset = 'анализ одного актива'
 briefcase = 'перейти в портфель'
 URL_intraday = 'http://api.marketstack.com/v1/intraday'
+due3, due6, due12 = 10800, 21600, 43200
 
 my_time = dt.timedelta(hours=3)
 

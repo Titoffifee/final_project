@@ -77,12 +77,7 @@ def choose_work_asset(update, context):
     return 4
 
 
-def get_time(update, context):
-    return my_time
-
-
 def erase_asset(id_user=-1, id_asset=-1):
-    print(id_user, id_asset)
     session = create_session()
     try:
         for el in session.query(UsersAsset).all():
@@ -114,8 +109,12 @@ def insert_asset(update, context):
         update.message.reply_text('Произошла ошибка во время добавления')
 
 
-def get_cost(update, context):
-    ticker = get_asset('name', context.user_data['name']).ticker
+def get_ticker(name):
+    ticker = get_asset('name', name).ticker
+    return ticker
+
+
+def get_cost(ticker):
     params = {
         'access_key': KEY,
         'symbols': ticker,
@@ -129,22 +128,22 @@ def get_cost(update, context):
         date = dt.datetime(year=int(date[0]), month=int(date[1]), day=int(date[2]),
                            hour=int(time[0]), minute=int(time[1]), second=int(time[2]))
         if '+' in last_change['date']:
-            date = date + (get_time(update, context) -
+            date = date + (my_time -
                            dt.timedelta(hours=int(last_change['date'].split('+')[1][:2]),
                                         minutes=int(last_change['date'].split('+')[1][2:])))
         else:
-            date = date + (get_time(update, context) +
+            date = date + (my_time +
                            dt.timedelta(hours=int(last_change['date'].split('-')[1][:2]),
                                         minutes=int(last_change['date'].split('-')[1][2:])))
+
         message = 'открытие: ' + str(last_change['open']) + \
                   '\nзакрытие: ' + str(last_change['close']) + \
                   '\nЦеновой максимум: ' + str(last_change['high']) + \
                   '\nЦеновой минимум: ' + str(last_change['low']) + \
                   '\nДата получения данных: ' + date.strftime('%d.%m.%Y %H:%M:%S')
-        update.message.reply_text(message)
-    except Exception:
-        update.message.reply_text('Произошла ошибка во время получения данных.')
-        return 1
+        return message
+    except Exception as e:
+        return (1, 'Произошла ошибка во время получения данных.')
 
 
 def cycle_briefcase_solo_work(update, context, bot=None):

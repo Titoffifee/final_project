@@ -1,6 +1,47 @@
 from functions import *
 
 
+def timer(context):
+    user_id, tr = context.job.context
+    my_id = get_user('tg_id', user_id).id
+    session = create_session()
+    id_assets = session.query(UsersAsset).filter(UsersAsset.user == my_id, UsersAsset.timer == tr).all()
+    for el in id_assets:
+        asset_out = session.query(Asset).filter(Asset.id == el.asset).first()
+        text = 'Название: ' + asset_out.name + '\n'
+        text = text + get_cost(asset_out.ticker)
+        text = text + '\n---'
+        text = text + '\nЦена при покупке: ' + str(el.cost)
+        context.bot.send_message(chat_id=user_id, text=text)
+
+
+def add(context, id_tg):
+    if not context.job_queue.get_jobs_by_name(str(id_tg) + '|3'):
+        context.job_queue.run_repeating(
+            timer,
+            interval=due3,
+            context=(id_tg, 3),
+            name=str(id_tg) + '|3',
+            first=due3
+        )
+    if not context.job_queue.get_jobs_by_name(str(id_tg) + '|6'):
+        context.job_queue.run_repeating(
+            timer,
+            interval=due6,
+            context=(id_tg, 6),
+            name=str(id_tg) + '|6',
+            first=due6
+        )
+    if not context.job_queue.get_jobs_by_name(str(id_tg) + '|12'):
+        context.job_queue.run_repeating(
+            timer,
+            interval=due12,
+            context=(id_tg, 12),
+            name=str(id_tg) + '|12',
+            first=due12
+        )
+
+
 def start(update, context):
     insert_user(update.message.from_user.id)
     context.user_data['id_user'] = update.message.from_user.id
@@ -9,6 +50,7 @@ def start(update, context):
     with open('start_text.txt', 'r', encoding='utf8') as f:
         text = f.read()
         update.message.reply_text(text, reply_markup=markup)
+    add(context, context.user_data['id_user'])
 
 
 def help(update, context):
@@ -24,6 +66,7 @@ def menu(update, context):
     keyboard = [[asset, briefcase]]
     markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
     update.message.reply_text('Выберите, что хотите сделать:', reply_markup=markup)
+    add(context, context.user_data['id_user'])
     return 1
 
 
@@ -73,10 +116,13 @@ def choose_asset(update, context):
 
 def work_with_asset(update, context):
     if update.message.text == 'узнать стоимость актива':
-        v = get_cost(update, context)
-        if v is None:
+        v = get_cost(get_ticker(context.user_data['name']))
+        if type(v) == tuple:
+            update.message.reply_text(v[1])
+            return menu(update, context)
+        else:
+            update.message.reply_text(v)
             return choose_work_asset(update, context)
-        return menu(update, context)
     elif update.message.text == 'получить подробную аналитику':
         pass
     else:
@@ -172,10 +218,13 @@ def get_asset_to_work(update, context):
 
 def briefcase_solo_work(update, context):
     if update.message.text == 'Узнать стоимость актива':
-        v = get_cost(update, context)
-        if v is None:
+        v = get_cost(get_ticker(context.user_data['name']))
+        if type(v) != tuple:
+            update.message.reply_text(v)
             return cycle_briefcase_solo_work(update, context)
-        return menu(update, context)
+        else:
+            update.message.reply_text(v[1])
+            return menu(update, context)
     elif update.message.text == 'Удалить актив из портфеля':
         if erase_asset(get_user('tg_id', context.user_data['id_user']).id, context.user_data['id_asset']):
             update.message.reply_text('Актив удален')
