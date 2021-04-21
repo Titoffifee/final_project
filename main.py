@@ -124,7 +124,10 @@ def work_with_asset(update, context):
             update.message.reply_text(v)
             return choose_work_asset(update, context)
     elif update.message.text == 'получить подробную аналитику':
-        pass
+        if analys(update, context):
+            return choose_work_asset(update, context)
+        else:
+            return menu(update, context)
     else:
         update.message.reply_text('Введите стоимость покупки актива')
         return 7
@@ -260,6 +263,11 @@ def briefcase_solo_work(update, context):
                                         ['Стоимость при покупке']], one_time_keyboard=True)
         update.message.reply_text('Выберите параметр, который хотите поменять:', reply_markup=keyboard)
         return 12
+    elif update.message.text == 'Подробная аналитика':
+        if analys(update, context):
+            return cycle_briefcase_solo_work(update, context)
+        else:
+            return menu(update, context)
 
 
 def change_asset(update, context):
@@ -346,6 +354,16 @@ def timer_all(update, context):
     return menu(update, context)
 
 
+def analys(update, context):
+    v = get_analys(get_ticker(context.user_data['name']))
+    if type(v) == str:
+        update.message.reply_text(v)
+        return True
+    else:
+        update.message.reply_text(v[1])
+        return False
+
+
 if __name__ == '__main__':
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -378,7 +396,7 @@ if __name__ == '__main__':
                                 & ~Filters.command, change_timer)],
             15: [MessageHandler(Filters.text & ~Filters.command, change_cost)],
             16: [MessageHandler(Filters.text(['3 часа', '6 часов', '12 часов', 'без оповещений'])
-                                & ~Filters.command, timer_all)]
+                                & ~Filters.command, timer_all)],
         },
         fallbacks=[CommandHandler('help', help), menu_command]
     )

@@ -156,3 +156,38 @@ def cycle_briefcase_solo_work(update, context, bot=None):
                          reply_markup=keyboard,
                          chat_id=context.user_data['id_user'])
     return 11
+
+
+def get_analys(ticker):
+    month_before, year_before = dt.datetime.now() - month, dt.datetime.now() - year
+    month3_before, month6_before = dt.datetime.now() - month3, dt.datetime.now() - month6
+    params1, params2 = {'access_key': KEY, 'symbols': ticker, 'date_to': corr_date(month_before)},\
+                       {'access_key': KEY, 'symbols': ticker, 'date_to': corr_date(year_before)}
+    params3, params4 = {'access_key': KEY, 'symbols': ticker, 'date_to': corr_date(month3_before)}, \
+                       {'access_key': KEY, 'symbols': ticker, 'date_to': corr_date(month6_before)}
+    params = {'access_key': KEY, 'symbols': ticker}
+    try:
+        ans1, ans2 = requests.get(URL_eod, params=params1), requests.get(URL_eod, params=params2)
+        ans3, ans4 = requests.get(URL_eod, params=params3), requests.get(URL_eod, params=params4)
+        now = requests.get(URL_eod, params=params)
+        m, y = ans1.json()['data'][0], ans2.json()['data'][0]
+        m3, m6 = ans3.json()['data'][0], ans4.json()['data'][0]
+        n = now.json()['data'][0]
+        cost_now, cost_m, cost_y = (n['high'] + n['low']) / 2, \
+                                   (m['high'] + m['low']) / 2, \
+                                   (y['high'] + y['low']) / 2
+        cost_m3, cost_m6 = (m3['high'] + m3['low']) / 2,\
+                           (m6['high'] + m6['low']) / 2
+        message = []
+        message.append('Текущая цена: ' + str(cost_now))
+        message.append('Рост за месяц: ' + str((cost_now - cost_m) / cost_m * 100) +
+                       '% (' + str(cost_m) + ' -> ' + str(cost_now) + ')')
+        message.append('Рост за 3 месяца: ' + str((cost_now - cost_m3) / cost_m3 * 100) +
+                       '% (' + str(cost_m3) + ' -> ' + str(cost_now) + ')')
+        message.append('Рост за 6 месяцев: ' + str((cost_now - cost_m6) / cost_m6 * 100) +
+                       '% (' + str(cost_m6) + ' -> ' + str(cost_now) + ')')
+        message.append('Рост за год :' + str((cost_now - cost_y) / cost_y * 100) +
+                       '% (' + str(cost_y) + ' -> ' + str(cost_now) + ')')
+        return '\n'.join(message)
+    except Exception as e:
+        return (1, 'Произошла ошибка во время получения данных.')
