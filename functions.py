@@ -2,7 +2,7 @@ from sql import *
 
 
 def didnt_find_asset(update, context):
-    update.message.reply_text('ПРИКРЕПИ ФАЙЛ')
+    context.bot.send_document(update.message.from_user.id, open('assets.txt', 'rb'))
 
 
 def insert_user(my_id):
